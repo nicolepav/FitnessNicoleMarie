@@ -12,11 +12,15 @@ module.exports = {
   delete_past_activities_in_range: delete_past_activities_in_range,
   get_most_recent_entry: get_most_recent_entry,
   get_similar_activities_in_range: get_similar_activities_in_range,
-  get_all: get_all
+  get_all: get_all,
+
+  insertProfile: insertProfile,
+  getAllProfiles: getAllProfiles
 }
 
 // using a Promises-wrapped version of sqlite3
 const db = require('./sqlWrap');
+const db2 = require('./sqlWrap2');
 
 // our activity verifier
 const act = require('./activity');
@@ -237,5 +241,31 @@ async function get_all() {
   }
 }
 
-// SQL commands for ActivityTable
+/**
+ * Insert logged in profile
+ * @returns {Activity} activity 
+ * @returns {string} activity.activity - type of activity
+ * @returns {number} activity.date - ms since 1970
+ * @returns {float} activity.scalar - measure of activity conducted
+ */
 const insertDBProfile = "insert into ProfileTable (userID, firstName) values (?,?)"
+// 
+async function insertProfile(id, name) {
+  try {
+    await db2.run(insertDBProfile, [id, name]);
+  } catch (error) {
+    console.log("error", error)
+  }
+}
+
+// get ProfileTable entries
+async function getAllProfiles() {
+  try {
+    let results = await db2.all("select * from ProfileTable", []);
+    return results;
+  } 
+  catch (error) {
+    console.log(error);
+    return [];
+  }
+}

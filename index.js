@@ -6,6 +6,7 @@
 const express = require("express");		// express module provides basic server functions
 const dbo = require('./databaseOps');	// our database operations
 const db = require('./sqlWrap');		// Promises-wrapped version of sqlite3
+const db2 = require('./sqlWrap2');		// Promises-wrapped version of sqlite3
 const act = require('./activity'); 		// functions that verify activities before putting them in database
 const app = express();					// object that provides interface for express
 app.use(express.json()); 				// use this instead of the older body-parser
@@ -160,6 +161,7 @@ app.post('/store', async function(request, response, next) {
   await dbo.post_activity(activity)
   
   response.send({ message: "I got your POST request"});
+  
 });
 
 // This is where the server recieves and responds to  reminder GET requests
@@ -260,18 +262,44 @@ function isAuthenticated(req, res, next) {
 
 // function called during login, the second time passport.authenticate
 // is called (in /auth/redirect/),
-// once we actually have the profile data from Google. 
-function gotProfile(accessToken, refreshToken, profile, done) {
+// once we actually have the profile data from Google.
+
+async function gotProfile(accessToken, refreshToken, profile, done) {
     console.log("Google profile has arrived",profile);
     // here is a good place to check if user is in DB,
     // and to store him in DB if not already there. 
     // Second arg to "done" will be passed into serializeUser,
     // should be key to get user out of database.
 
-    let testProfile = profile;
-    console.log("TestProfile" , profile);
     let userid = profile.id;
+    console.log("USERID: ", userid);
+    console.log(typeof userid); // for debugging
 
+    let name = profile.name.givenName;
+    console.log("Name: ", name);
+    console.log(typeof name); // for debugging
+
+    // check if userID already exists in ProfileTable
+    // let exists = checkIfExistingProfile(userid);
+
+    let entries = await dbo.getAllProfiles(); // for debugging; show before insert
+    let exists = false;
+    for(let itr of entries) {
+      if(userid.toString() == itr.userID.toString()){
+        exists = true;
+      }
+    }
+
+    if(exists) { // don't insert
+      console.log("userID:", userid,"already in ProfileTable");
+    }
+    else { // insert
+      await dbo.insertProfile(userid, name);
+      console.log("userID:", userid, "added to ProfileTable"); 
+    }
+    let updatedEntries = await dbo.getAllProfiles(); // for debugging; show after insert
+    console.log("ProfileTable:", updatedEntries);  
+    
     done(null, userid); 
 }
 
