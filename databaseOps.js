@@ -15,7 +15,8 @@ module.exports = {
   get_all: get_all,
 
   insertProfile: insertProfile,
-  getAllProfiles: getAllProfiles
+  getAllProfiles: getAllProfiles,
+  getProfile: getProfile
 }
 
 // using a Promises-wrapped version of sqlite3
@@ -267,5 +268,17 @@ async function getAllProfiles() {
   catch (error) {
     console.log(error);
     return [];
+  }
+}
+
+// get specific ProfileTable entry
+async function getProfile(id) {
+  try {
+    let result = await db2.get("select * from ProfileTable where userID = ?", id);
+    return result;
+  } 
+  catch (error) {
+    console.log(error);
+    return {};
   }
 }

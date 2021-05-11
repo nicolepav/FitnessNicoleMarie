@@ -109,6 +109,14 @@ app.get('/auth/accepted',
   
 );
 
+app.get('/name', async function(request, response, next) {
+  console.log("Server recieved a post request at", request.url)
+
+  let profile = dbo.getProfile(userid);
+  console.log("PROFILE OF NAME", profile);
+  // response.send({message: profile.name.firstName}); 
+});
+
 // logout request
 // documentation: http://www.passportjs.org/docs/logout/
 app.get('/logout', function(req, res){
@@ -300,8 +308,9 @@ async function gotProfile(accessToken, refreshToken, profile, done) {
     let updatedEntries = await dbo.getAllProfiles(); // for debugging; show after insert
     console.log("ProfileTable:", updatedEntries);  
     
-    done(null, userid); 
+    done(null, userid);
 }
+
 
 // Part of Server's sesssion set-up.  
 // The second operand of "done" becomes the input to deserializeUser
