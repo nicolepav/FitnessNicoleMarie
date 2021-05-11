@@ -8,22 +8,45 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
-    <link href="./reset.css" rel="stylesheet" type="text/css" />
-    <link href="./demo.css" rel="stylesheet" type="text/css" />
+    
+	<link href="./css/reset.css" rel="stylesheet" type="text/css" />
+    <link href="./css/splash.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-  <header>
-    <h1>Welcome to the login demo.</h1>
-  </header>
-  <main>
-    This app lets you login with Google, and then see a page that is otherwise hidden. This is the "splash page", where the user comes when first visiting. 
-    To examine this demo, fork it and add your Google Client ID and Client Secret with the "lock" icon on the right in Replit.
+	
+	<div id="splashmain">
+		<div id="splash-left">
+			
+			<div class="splash-centered splash-left-child">
+				<img id="workoutImage" src="./images/header_image.png" alt="people playing sports">
+			</div>
+			
+			<div id="splash-left-subtitle" class="splash-left-child">
+				<p>Start your fitness journey today and get ready to track your fitness activity</p>
+			</div>
+			
+		</div>
+		<div id="splash-right">
 
-<a href="auth/google">
-  <button>Start Login!</button>
-</a>
+			<div class="splash-centered splash-right-child">
+				<img id="logoImage" src="./images/tractivity-logo-white.png">
+			</div>
+			<div id="splash-right-subtitle" class="splash-right-child">
+				Welcome to tractivity!
+			</div>
+			<div class="splash-centered splash-right-child">
+			<p> Log in/Register </p>
+			<a href="auth/google"><button>
+				<img src="/images/btn_google_signin_light_normal_web.png">
+			</button></a>
+			</div>
 
-  </main>
+		</div>
+
+	</div>
+
+	
+
 </body>
 </html>
 

@@ -1,20 +1,25 @@
-const express = require('express');
+'use strict'
+'use strict'
+
+// A server that uses a database. 
+// Requires from Stage 2
+const express = require("express");		// express module provides basic server functions
+const dbo = require('./databaseOps');	// our database operations
+const db = require('./sqlWrap');		// Promises-wrapped version of sqlite3
+const act = require('./activity'); 		// functions that verify activities before putting them in database
+const app = express();					// object that provides interface for express
+app.use(express.json()); 				// use this instead of the older body-parser
+app.use(express.static('public')) 		// make all the files in 'public' available on the Web
+
+
+// Requires for Stage 3
 const passport = require('passport');
 const cookieSession = require('cookie-session');
-
 const GoogleStrategy = require('passport-google-oauth20');
 
 
-// Access OAUTH Stuff
-// const mySecret = process.env['clientID']
-// const mySecret = process.env['ClientSecret']
-
-
-// Google login credentials, used when the user contacts
-// Google, to tell them where he is trying to login to, and show
-// that this domain is registered for this service. 
-// Google will respond with a key we can use to retrieve profile
-// information, packed into a redirect response that redirects to
+// Google login credentials
+// Google will respond with a key we can use to retrieve profile information packed into a redirect response that redirects to 
 // server162.site:[port]/auth/redirect
 const hiddenClientID = process.env['clientID']
 const hiddenClientSecret = process.env['ClientSecret']
@@ -29,18 +34,14 @@ const googleLoginData = {
 };
 
 
-// Tell passport we will be using login with Google, and
-// give it our data for registering us with Google.
-// The gotProfile callback is for the server's HTTPS request
-// to Google for the user's profile information.
+// Tell passport we will be using login with Google, and give it our data
+// The gotProfile callback is for the server's HTTPS request to Google for the user's profile information.
 // It will get used much later in the pipeline. 
 passport.use(new GoogleStrategy(googleLoginData, gotProfile) );
 
 
 // Let's build a server pipeline!
 
-// app is the object that implements the express server
-const app = express();
 
 // pipeline stage that just echos url, for debugging
 app.use('/', printURL);
@@ -102,8 +103,18 @@ app.get('/auth/accepted',
 	function (req, res) {
 	    console.log('Logged in and using cookies!')
       // tell browser to get the hidden main page of the app
-	    res.redirect('/hello.html');
-	});
+	    res.redirect('/index.html');
+	}
+  
+);
+
+// logout request
+// documentation: http://www.passportjs.org/docs/logout/
+app.get('/logout', function(req, res){
+  console.log('User is logging out');
+  req.logout(); // ends session
+  res.redirect('/');
+});
 
 // static files in /user are only available after login
 app.get('/*',
@@ -113,7 +124,10 @@ app.get('/*',
 	express.static('user') 
        ); 
 
-
+// // when there is nothing following the slash in the url, return the main page of the app.
+app.get("/", (request, response) => {
+  response.sendFile(__dirname + "/public/index.html");
+});
 
 // next, put all queries (like store or reminder ... notice the isAuthenticated 
 // middleware function; queries are only handled if the user is logged in
@@ -122,14 +136,91 @@ app.get('/query', isAuthenticated,
       console.log("saw query");
       res.send('HTTP query!') });
 
-// finally, file not found, if we cannot handle otherwise.
-app.use( fileNotFound );
 
-// Pipeline is ready. Start listening!  
+
+// listen for requests :)
 const listener = app.listen(3000, () => {
   console.log("The static server is listening on port " + listener.address().port);
 });
 
+// This is where the server recieves and responds to get /all requests
+// used for debugging - dumps whole database
+app.get('/all', async function(request, response, next) {
+  console.log("Server recieved a get /all request at", request.url);
+  let results = await dbo.get_all()
+  
+  response.send(results);
+});
+
+// store post request
+app.post('/store', async function(request, response, next) {
+  console.log("Server recieved a post request at", request.url);
+
+  let activity = act.Activity(request.body)
+  await dbo.post_activity(activity)
+  
+  response.send({ message: "I got your POST request"});
+});
+
+// This is where the server recieves and responds to  reminder GET requests
+app.get('/reminder', async function(request, response, next) {
+  console.log("Server recieved a post request at", request.url)
+  
+  let currTime = newUTCTime()
+  currTime = (new Date()).getTime()
+
+  // Get Most Recent Past Planned Activity and Delete All Past Planned Activities
+  let result = await dbo.get_most_recent_planned_activity_in_range(0, currTime)
+  await dbo.delete_past_activities_in_range(0, currTime);
+
+  if (result != null){
+    // Format Activity Object Properly
+    result.scalar = result.amount
+    result.date = result['MAX(date)']
+    // Send Client Most Recent Planned Activity from the Past
+    response.send(act.Activity(result));
+  } else {
+    response.send({message: 'All activities up to date!'});
+  }
+  
+});
+
+// This is where the server recieves and responds to week GET requests
+app.get('/week', async function(request, response, next) {
+  console.log("Server recieved a post request at", request.url);
+
+  let date = parseInt(request.query.date)
+  let activity = request.query.activity
+  
+  /* Get Latest Activity in DB if not provided by query params */
+  if (activity === undefined) {
+    let result = await dbo.get_most_recent_entry()
+    try {
+      activity = result.activity
+    } catch(error) {
+      activity = "none"
+    }
+  }
+  
+  /* Get Activity Data for current Date and The Week Prior */
+  let min = date - 6 * MS_IN_DAY
+  let max = date
+  let result = await dbo.get_similar_activities_in_range(activity, min, max)
+
+  /* Store Activity amounts in Buckets, Ascending by Date */
+  let data = Array.from({length: 7}, (_, i) => {
+    return { date: date - i * MS_IN_DAY, value: 0 }
+  })
+
+  /* Fill Data Buckets With Activity Amounts */
+  for(let i = 0 ; i < result.length; i++) {
+    let idx = Math.floor((date - result[i].date)/MS_IN_DAY)
+    data[idx].value += result[i].amount
+  }
+  
+  // Send Client Activity for the Se;ected Week
+  response.send(data.reverse());
+});
 
 // middleware functions called by some of the functions above. 
 
@@ -177,7 +268,9 @@ function gotProfile(accessToken, refreshToken, profile, done) {
     // Second arg to "done" will be passed into serializeUser,
     // should be key to get user out of database.
 
-    let userid = profile.id;  
+    let testProfile = profile;
+    console.log("TestProfile" , profile);
+    let userid = profile.id;
 
     done(null, userid); 
 }
@@ -204,3 +297,49 @@ passport.deserializeUser((userid, done) => {
     done(null, userData);
 });
 
+// UNORGANIZED HELPER FUNCTIONS
+
+// call the async test function for the database
+// this fills the db with test data
+// in your system, you can delete this. 
+// dbo.testDB().catch(
+//   function (error) {
+//     console.log("error:",error);}
+// );
+
+const MS_IN_DAY = 86400000
+
+/**
+ * Convert GMT date to UTC
+ * @returns {Date} current date, but converts GMT date to UTC date
+ */
+ function newUTCTime() {
+    let gmtDate = new Date()
+    let utcDate = (new Date(gmtDate.toLocaleDateString()))
+    let utcTime = Date.UTC(
+        utcDate.getFullYear(),
+        utcDate.getMonth(),
+        utcDate.getDay()
+    )
+    console.log("time:", utcTime)
+    return utcTime
+}
+
+
+/**
+ * Convert UTC date to UTC time
+ * @param {Date} date - date to get UTC time of
+ * @returns {number}
+ */
+function date_to_UTC_datetime(date) {
+  let utcDate = new Date(date.toLocaleDateString())
+  return Date.UTC(
+        utcDate.getFullYear(),
+        utcDate.getMonth(),
+        utcDate.getDay()
+    )
+}
+
+
+// finally, file not found, if we cannot handle otherwise.
+app.use( fileNotFound );
