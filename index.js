@@ -112,9 +112,14 @@ app.get('/auth/accepted',
 app.get('/name', async function(request, response, next) {
   console.log("Server recieved a post request at", request.url)
 
-  let profile = dbo.getProfile(userid);
+console.log(request.user);
+
+  // access contents of userData object from deserializeUser 
+  // by doing request.user.PROPERTY
+  let profile = await dbo.getProfile(request.user.id);
   console.log("PROFILE OF NAME", profile);
-  // response.send({message: profile.name.firstName}); 
+
+  response.send({message: profile.firstName}); 
 });
 
 // logout request
@@ -330,7 +335,9 @@ passport.deserializeUser((userid, done) => {
     // here is a good place to look up user data in database using
     // userid. Put whatever you want into an object. It ends up
     // as the property "user" of the "req" object. 
-    let userData = {userData: "data from user's db row goes here"};
+    let userData = {
+		id: userid,
+		};
     done(null, userData);
 });
 
