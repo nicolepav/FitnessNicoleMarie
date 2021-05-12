@@ -28,10 +28,10 @@ const act = require('./activity');
 
 // SQL commands for ActivityTable
 const insertDB = "insert into ActivityTable (activity, date, amount, user) values (?,?,?, ?)"
-const getOneDB = "select * from ActivityTable where activity = ? and date = ?";
-const allDB = "select * from ActivityTable where activity = ?";
-const deletePrevPlannedDB = "DELETE FROM ActivityTable WHERE amount < 0 and date BETWEEN ? and ?";
-const getMostRecentPrevPlannedDB = "SELECT rowIdNum, activity, MAX(date), amount FROM ActivityTable WHERE amount <= 0 and date BETWEEN ? and ?";
+const getOneDB = "select * from ActivityTable where activity = ? and date = ? and user = ?";
+const allDB = "select * from ActivityTable where activity = ? and user = ?";
+const deletePrevPlannedDB = "DELETE FROM ActivityTable WHERE user = ? and amount < 0 and date BETWEEN ? and ?";
+const getMostRecentPrevPlannedDB = "SELECT rowIdNum, activity, MAX(date), amount FROM ActivityTable WHERE user = ? and amount <= 0 and date BETWEEN ? and ?";
 const getMostRecentDB = "SELECT MAX(rowIdNum), activity, date, amount FROM ActivityTable";
 const getPastWeekByActivityDB = "SELECT * FROM ActivityTable WHERE activity = ? and date BETWEEN ? and ? ORDER BY date ASC";
 
@@ -62,9 +62,9 @@ async function post_activity(activity) {
  * @returns {number} activity.date - ms since 1970
  * @returns {float} activity.scalar - measure of activity conducted
  */
-async function get_most_recent_planned_activity_in_range(min, max) {
+async function get_most_recent_planned_activity_in_range(user, min, max) {
   try {
-    let results = await db.get(getMostRecentPrevPlannedDB, [min, max]);
+    let results = await db.get(getMostRecentPrevPlannedDB, [user, min, max]);
     return (results.rowIdNum != null) ? results : null;
   }
   catch (error) {
@@ -113,6 +113,25 @@ async function get_similar_activities_in_range(activityType, min, max) {
   }
 }
 
+/**
+ * Get all activities that have the same activityType which fall within the 
+ * min and max date range
+ * @param {string} activityType - type of activity
+ * @param {number} min - ms since 1970
+ * @param {number} max - ms since 1970
+ * @returns {Array.<Activity>} similar activities
+ */
+async function get_similar_activities_in_range(activityType, min, max) {
+  try {
+    let results = await db.all(getPastWeekByActivityDB, [activityType, min, max]);
+    return results;
+  }
+  catch (error) {
+    console.log(error);
+    return [];
+  }
+}
+
 
 /**
  * Delete all activities that have the same activityType which fall within the 
@@ -120,9 +139,9 @@ async function get_similar_activities_in_range(activityType, min, max) {
  * @param {number} min - ms since 1970
  * @param {number} max - ms since 1970
  */
-async function delete_past_activities_in_range(min, max) {
+async function delete_past_activities_in_range(user, min, max) {
   try {
-    await db.run(deletePrevPlannedDB, [min, max]);
+    await db.run(deletePrevPlannedDB, [user, min, max]);
   }
   catch (error) {
     console.log(error);

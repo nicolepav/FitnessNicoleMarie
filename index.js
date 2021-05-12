@@ -185,13 +185,15 @@ app.post('/store', async function(request, response, next) {
 // This is where the server recieves and responds to  reminder GET requests
 app.get('/reminder', async function(request, response, next) {
   console.log("Server recieved a post request at", request.url)
-  
+  let id = response.req.user.id;
+	console.log("Reminder user is: " + id);
+
   let currTime = newUTCTime()
   currTime = (new Date()).getTime()
 
   // Get Most Recent Past Planned Activity and Delete All Past Planned Activities
-  let result = await dbo.get_most_recent_planned_activity_in_range(0, currTime)
-  await dbo.delete_past_activities_in_range(0, currTime);
+  let result = await dbo.get_most_recent_planned_activity_in_range(id, 0, currTime)
+  await dbo.delete_past_activities_in_range(id, 0, currTime);
 
   if (result != null){
     // Format Activity Object Properly
