@@ -5,8 +5,7 @@ const util = require('util');
 
 // old-fashioned database creation code 
 
-// creates a new database object, not a 
-// new database. 
+// creates a new database object, not a new database. 
 const db2 = new sql.Database("profile.db")
 
 // check if ProfileTable database exists
@@ -45,17 +44,3 @@ db2.deleteEverything = async function() {
 
 // allow code in index.js to use the db object
 module.exports = db2;
-
-/*
-RESOLVED
-// this is the problem child, adding another module.exports for db2 (ProfileTable)
-// module.exports = db2;
-
-// this doesn't work either, reference databaseOps.js line 8
-// module.exports = {
-//   db: db,
-//   db2: db2
-// }
-// it might be bc in index.js line 8 with the var being called db??
-*/
-

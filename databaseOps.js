@@ -11,7 +11,6 @@ module.exports = {
   get_most_recent_planned_activity_in_range: get_most_recent_planned_activity_in_range,
   delete_past_activities_in_range: delete_past_activities_in_range,
   get_most_recent_entry: get_most_recent_entry,
-  get_similar_activities_in_range: get_similar_activities_in_range,
   get_all: get_all,
 
   insertProfile: insertProfile,
@@ -34,9 +33,7 @@ const allDB = "select * from ActivityTable where activity = ? and user = ?";
 const deletePrevPlannedDB = "DELETE FROM ActivityTable WHERE user = ? and amount < 0 and date BETWEEN ? and ?";
 const getMostRecentPrevPlannedDB = "SELECT rowIdNum, activity, MAX(date), amount FROM ActivityTable WHERE user = ? and amount <= 0 and date BETWEEN ? and ?";
 const getMostRecentDB = "SELECT MAX(rowIdNum), activity, date, amount FROM ActivityTable";
-const getPastWeekByActivityDB = "SELECT * FROM ActivityTable WHERE activity = ? and date BETWEEN ? and ? ORDER BY date ASC";
 const getPastWeekByActivityDB_ID = "SELECT * FROM ActivityTable WHERE activity = ? and date BETWEEN ? and ? and user = ? ORDER BY date ASC";
-
 
 /**
  * Insert activity into the database
@@ -52,7 +49,6 @@ async function post_activity(activity) {
     console.log("error", error)
   }
 }
-
 
 /**
  * Get the most recently planned activity that falls within the min and max 
@@ -75,8 +71,6 @@ async function get_most_recent_planned_activity_in_range(user, min, max) {
   }
 }
 
-
-
 /**
  * Get the most recently inserted activity in the database
  * @returns {Activity} activity 
@@ -92,26 +86,6 @@ async function get_most_recent_entry() {
   catch (error) {
     console.log(error);
     return null;
-  }
-}
-
-
-/**
- * Get all activities that have the same activityType which fall within the 
- * min and max date range
- * @param {string} activityType - type of activity
- * @param {number} min - ms since 1970
- * @param {number} max - ms since 1970
- * @returns {Array.<Activity>} similar activities
- */
-async function get_similar_activities_in_range(activityType, min, max) {
-  try {
-    let results = await db.all(getPastWeekByActivityDB, [activityType, min, max]);
-    return results;
-  }
-  catch (error) {
-    console.log(error);
-    return [];
   }
 }
 
@@ -135,8 +109,6 @@ async function get_similar_activities_in_range_id(activityType, min, max, user) 
   }
 }
 
-
-
 /**
  * Delete all activities that have the same activityType which fall within the 
  * min and max date range
@@ -153,7 +125,6 @@ async function delete_past_activities_in_range(user, min, max) {
 }
 
 // UNORGANIZED HELPER FUNCTIONS
-
 
 /**
  * Convert GMT date to UTC
@@ -184,6 +155,8 @@ async function get_all() {
     return [];
   }
 }
+
+// ProfileTable helper functions
 
 /**
  * Insert logged in profile

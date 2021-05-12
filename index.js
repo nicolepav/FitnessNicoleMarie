@@ -229,9 +229,9 @@ app.get('/week', async function(request, response, next) {
   let min = date - 6 * MS_IN_DAY
   let max = date
   let id = response.req.user.id;
-	console.log("VIEW PROGRESS ID CHECK: " + id);
+	// console.log("VIEW PROGRESS ID CHECK: " + id);
   let result = await dbo.get_similar_activities_in_range_id(activity, min, max, id)
-  console.log("PULLED DATA:", result);
+  // console.log("PULLED DATA:", result);
 
   /* Store Activity amounts in Buckets, Ascending by Date */
   let data = Array.from({length: 7}, (_, i) => {
