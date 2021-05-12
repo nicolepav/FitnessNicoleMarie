@@ -1,4 +1,5 @@
-let newName = await checkName()
+// keep this, it just calls the update function
+let callFunc = await greetByName()
 
 // connect to server
 function getName() {
@@ -24,7 +25,7 @@ function getName() {
 }
 
 
-async function checkName() {
+async function greetByName() {
     
 		let fetched = await getName();
 		console.log(fetched.message);	// the name
@@ -33,7 +34,7 @@ async function checkName() {
 		let nameSpan = document.getElementById("username");
 		nameSpan.textContent = newname + "!";
 
-    if (test.message) {
+    if (fetched.message) {
         return 
     }
 
