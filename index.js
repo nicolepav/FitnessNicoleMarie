@@ -34,7 +34,6 @@ const googleLoginData = {
     proxy: true
 };
 
-
 // Tell passport we will be using login with Google, and give it our data
 // The gotProfile callback is for the server's HTTPS request to Google for the user's profile information.
 // It will get used much later in the pipeline. 
@@ -42,8 +41,6 @@ passport.use(new GoogleStrategy(googleLoginData, gotProfile) );
 
 
 // Let's build a server pipeline!
-
-
 // pipeline stage that just echos url, for debugging
 app.use('/', printURL);
 
@@ -105,9 +102,7 @@ app.get('/auth/accepted',
 	    console.log('Logged in and using cookies!')
       // tell browser to get the hidden main page of the app
 	    res.redirect('/index.html');
-	}
-  
-);
+});
 
 app.get('/name', async function(request, response, next) {
   console.log("Server recieved a get request at", request.url)
@@ -116,7 +111,6 @@ app.get('/name', async function(request, response, next) {
   // access contents of userData object from deserializeUser 
   // by doing request.user.PROPERTY
   let profile = await dbo.getProfile(request.user.id);
-  console.log("PROFILE OF NAME", profile);
 
   response.send({message: profile.firstName}); 
 });
@@ -131,11 +125,10 @@ app.get('/logout', function(req, res){
 
 // static files in /user are only available after login
 app.get('/*',
-	isAuthenticated, // only pass on to following function if
-	// user is logged in 
+	isAuthenticated, // only pass on to following function if user is logged in 
 	// serving files that start with /user from here gets them from ./
 	express.static('user') 
-       ); 
+); 
 
 // // when there is nothing following the slash in the url, return the main page of the app.
 app.get("/", (request, response) => {
@@ -147,9 +140,8 @@ app.get("/", (request, response) => {
 app.get('/query', isAuthenticated,
     function (req, res) { 
       console.log("saw query");
-      res.send('HTTP query!') });
-
-
+      res.send('HTTP query!') 
+});
 
 // listen for requests :)
 const listener = app.listen(3000, () => {
@@ -161,7 +153,6 @@ const listener = app.listen(3000, () => {
 app.get('/all', async function(request, response, next) {
   console.log("Server recieved a get /all request at", request.url);
   let results = await dbo.get_all()
-  
   response.send(results);
 });
 
@@ -171,16 +162,11 @@ app.post('/store', async function(request, response, next) {
 
   let activity = act.Activity(request.body)
 	let id = response.req.user.id;
-  
-
 	activity.user = id;
+
 	console.log("UserID appended to activity submission");
-
-
   await dbo.post_activity(activity)
-  
   response.send({ message: "I got your POST request"});
-  
 });
 
 // This is where the server recieves and responds to  reminder GET requests
@@ -229,8 +215,10 @@ app.get('/week', async function(request, response, next) {
   let min = date - 6 * MS_IN_DAY
   let max = date
   let id = response.req.user.id;
-	// console.log("VIEW PROGRESS ID CHECK: " + id);
   let result = await dbo.get_similar_activities_in_range_id(activity, min, max, id)
+
+  // for debugging
+  // console.log("VIEW PROGRESS ID CHECK: " + id);
   // console.log("PULLED DATA:", result);
 
   /* Store Activity amounts in Buckets, Ascending by Date */
@@ -255,9 +243,6 @@ function printURL (req, res, next) {
     console.log(req.url);
     next();
 }
-
-
-
 
 // function to check whether user is logged when trying to access
 // personal data
@@ -289,19 +274,19 @@ async function gotProfile(accessToken, refreshToken, profile, done) {
     // Second arg to "done" will be passed into serializeUser,
     // should be key to get user out of database.
 
+    // for debugging
     let userid = profile.id;
     console.log("USERID: ", userid);
-    console.log(typeof userid); // for debugging
+    console.log(typeof userid);
 
+    // for debugging
     let name = profile.name.givenName;
     console.log("Name: ", name);
-    console.log(typeof name); // for debugging
+    console.log(typeof name); 
 
-    // check if userID already exists in ProfileTable
-    // let exists = checkIfExistingProfile(userid);
-
-    let entries = await dbo.getAllProfiles(); // for debugging; show before insert
+    let entries = await dbo.getAllProfiles(); 
     let exists = false;
+    // check if userID already exists in ProfileTable
     for(let itr of entries) {
       if(userid.toString() == itr.userID.toString()){
         exists = true;
@@ -315,12 +300,11 @@ async function gotProfile(accessToken, refreshToken, profile, done) {
       await dbo.insertProfile(userid, name);
       console.log("userID:", userid, "added to ProfileTable"); 
     }
-    let updatedEntries = await dbo.getAllProfiles(); // for debugging; show after insert
+    let updatedEntries = await dbo.getAllProfiles(); 
     console.log("ProfileTable:", updatedEntries);  
     
     done(null, userid);
 }
-
 
 // Part of Server's sesssion set-up.  
 // The second operand of "done" becomes the input to deserializeUser
@@ -346,11 +330,6 @@ passport.deserializeUser((userid, done) => {
 			};
     done(null, userData);
 });
-
-
-
-
-
 
 // UNORGANIZED HELPER FUNCTIONS
 
