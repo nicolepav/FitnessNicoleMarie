@@ -171,6 +171,7 @@ app.post('/store', async function(request, response, next) {
 
   let activity = act.Activity(request.body)
 	let id = response.req.user.id;
+  
 
 	activity.user = id;
 	console.log("UserID appended to activity submission");
@@ -227,7 +228,10 @@ app.get('/week', async function(request, response, next) {
   /* Get Activity Data for current Date and The Week Prior */
   let min = date - 6 * MS_IN_DAY
   let max = date
-  let result = await dbo.get_similar_activities_in_range(activity, min, max)
+  let id = response.req.user.id;
+	console.log("VIEW PROGRESS ID CHECK: " + id);
+  let result = await dbo.get_similar_activities_in_range_id(activity, min, max, id)
+  console.log("PULLED DATA:", result);
 
   /* Store Activity amounts in Buckets, Ascending by Date */
   let data = Array.from({length: 7}, (_, i) => {

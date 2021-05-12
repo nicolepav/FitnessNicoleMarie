@@ -16,7 +16,8 @@ module.exports = {
 
   insertProfile: insertProfile,
   getAllProfiles: getAllProfiles,
-  getProfile: getProfile
+  getProfile: getProfile,
+  get_similar_activities_in_range_id: get_similar_activities_in_range_id
 }
 
 // using a Promises-wrapped version of sqlite3
@@ -34,6 +35,7 @@ const deletePrevPlannedDB = "DELETE FROM ActivityTable WHERE user = ? and amount
 const getMostRecentPrevPlannedDB = "SELECT rowIdNum, activity, MAX(date), amount FROM ActivityTable WHERE user = ? and amount <= 0 and date BETWEEN ? and ?";
 const getMostRecentDB = "SELECT MAX(rowIdNum), activity, date, amount FROM ActivityTable";
 const getPastWeekByActivityDB = "SELECT * FROM ActivityTable WHERE activity = ? and date BETWEEN ? and ? ORDER BY date ASC";
+const getPastWeekByActivityDB_ID = "SELECT * FROM ActivityTable WHERE activity = ? and date BETWEEN ? and ? and user = ? ORDER BY date ASC";
 
 
 /**
@@ -119,11 +121,12 @@ async function get_similar_activities_in_range(activityType, min, max) {
  * @param {string} activityType - type of activity
  * @param {number} min - ms since 1970
  * @param {number} max - ms since 1970
+ * @param {string} userID - logged in user
  * @returns {Array.<Activity>} similar activities
  */
-async function get_similar_activities_in_range_id(activityType, min, max, userID) {
+async function get_similar_activities_in_range_id(activityType, min, max, user) {
   try {
-    let results = await db.all(getPastWeekByActivityDB, [activityType, min, max]);
+    let results = await db.all(getPastWeekByActivityDB_ID, [activityType, min, max, user]);
     return results;
   }
   catch (error) {
