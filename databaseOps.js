@@ -121,7 +121,7 @@ async function get_similar_activities_in_range(activityType, min, max) {
  * @param {number} max - ms since 1970
  * @returns {Array.<Activity>} similar activities
  */
-async function get_similar_activities_in_range(activityType, min, max) {
+async function get_similar_activities_in_range_id(activityType, min, max, userID) {
   try {
     let results = await db.all(getPastWeekByActivityDB, [activityType, min, max]);
     return results;
@@ -131,6 +131,7 @@ async function get_similar_activities_in_range(activityType, min, max) {
     return [];
   }
 }
+
 
 
 /**
