@@ -110,9 +110,8 @@ app.get('/auth/accepted',
 );
 
 app.get('/name', async function(request, response, next) {
-  console.log("Server recieved a post request at", request.url)
-
-console.log(request.user);
+  console.log("Server recieved a get request at", request.url)
+  console.log(request.user);
 
   // access contents of userData object from deserializeUser 
   // by doing request.user.PROPERTY
