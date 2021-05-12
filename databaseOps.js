@@ -6,7 +6,7 @@
 // that the calling function can use. 
 
 module.exports = {
-  testDB: testDB,
+  // testDB: testDB,
   post_activity: post_activity,
   get_most_recent_planned_activity_in_range: get_most_recent_planned_activity_in_range,
   delete_past_activities_in_range: delete_past_activities_in_range,
@@ -27,7 +27,7 @@ const db2 = require('./sqlWrap2');
 const act = require('./activity');
 
 // SQL commands for ActivityTable
-const insertDB = "insert into ActivityTable (activity, date, amount) values (?,?,?)"
+const insertDB = "insert into ActivityTable (activity, date, amount, user) values (?,?,?, ?)"
 const getOneDB = "select * from ActivityTable where activity = ? and date = ?";
 const allDB = "select * from ActivityTable where activity = ?";
 const deletePrevPlannedDB = "DELETE FROM ActivityTable WHERE amount < 0 and date BETWEEN ? and ?";
@@ -35,86 +35,6 @@ const getMostRecentPrevPlannedDB = "SELECT rowIdNum, activity, MAX(date), amount
 const getMostRecentDB = "SELECT MAX(rowIdNum), activity, date, amount FROM ActivityTable";
 const getPastWeekByActivityDB = "SELECT * FROM ActivityTable WHERE activity = ? and date BETWEEN ? and ? ORDER BY date ASC";
 
-// Testing function loads some data into DB. 
-// Is called when app starts up to put fake 
-// data into db for testing purposes.
-// Can be removed in "production". 
-async function testDB () {
-  
-  // for testing, always use today's date
-  const today = new Date().getTime();
-  
-  // all DB commands are called using await
-  
-  // empty out database - probably you don't want to do this in your program
-  await db.deleteEverything();
-  
-  const MS_IN_DAY = 86400000
-  let newDate =  new Date(); // today!
-  let startDate = newDate.getTime() - 7 * MS_IN_DAY;
-  let planDate3 = newDate.getTime() - 3 * MS_IN_DAY;
-  let planDate2 = newDate.getTime() - 2 * MS_IN_DAY;
-  console.log("today:", startDate)
-  
-  let dbData = [
-    {
-      type: 'walk',
-      data: Array.from({length: 8}, () => randomNumber(0,1)),
-      start: startDate
-    },
-    {
-      type: 'run',
-      data: Array.from({length: 8}, () => randomNumber(1,3)),
-      start: startDate
-    },
-    {
-      type: 'swim',
-      data: Array.from({length: 8}, () => randomNumber(30, 100, false)),
-      start: startDate
-    },
-    {
-      type: 'bike',
-      data: Array.from({length: 8}, () => randomNumber(5,10)),
-      start: startDate
-    },
-    {
-      type: 'yoga',
-      data: Array.from({length: 8}, () => randomNumber(30,120,false)),
-      start: startDate
-    },
-    {
-      type: 'soccer',
-      data: Array.from({length: 8}, () => randomNumber(120,180,false)),
-      start: startDate
-    },
-    {
-      type: 'basketball',
-      data: Array.from({length: 8}, () => randomNumber(60,120,false)),
-      start: startDate
-    },
-  ]
-  
-  for(const entry of dbData) {
-    for(let i = 0 ; i < entry.data.length; i++) {
-      await db.run(insertDB,[entry.type, entry.start + i * MS_IN_DAY, entry.data[i]]);
-    }
-  }
-  
-
-  await db.run(insertDB,["yoga", planDate2, -1]);
-  await db.run(insertDB,["yoga", planDate3, -1]);
-  await db.run(insertDB,["run", planDate2, -1]);
-
-  // some examples of getting data out of database
-  
-  // look at the item we just inserted
-  let result = await db.get(getOneDB,["run",startDate]);
-  console.log("sample single db result",result);
-  
-  // get multiple items as a list
-  result = await db.all(allDB,["walk"]);
-  console.log("sample multiple db result",result);
-}
 
 /**
  * Insert activity into the database
