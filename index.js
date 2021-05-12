@@ -170,6 +170,12 @@ app.post('/store', async function(request, response, next) {
   console.log("Server recieved a post request at", request.url);
 
   let activity = act.Activity(request.body)
+	let id = response.req.user.id;
+
+	activity.user = id;
+	console.log("UserID appended to activity submission");
+
+
   await dbo.post_activity(activity)
   
   response.send({ message: "I got your POST request"});
@@ -244,13 +250,7 @@ function printURL (req, res, next) {
     next();
 }
 
-// function for end of server pipeline
-function fileNotFound(req, res) {
-    let url = req.url;
-    res.type('text/plain');
-    res.status(404);
-    res.send('Cannot find '+url);
-    }
+
 
 
 // function to check whether user is logged when trying to access
@@ -334,11 +334,17 @@ passport.deserializeUser((userid, done) => {
     // here is a good place to look up user data in database using
     // userid. Put whatever you want into an object. It ends up
     // as the property "user" of the "req" object. 
-    let userData = {
-		id: userid,
-		};
+    let userData = 
+			{
+				id: userid,
+			};
     done(null, userData);
 });
+
+
+
+
+
 
 // UNORGANIZED HELPER FUNCTIONS
 
@@ -383,6 +389,13 @@ function date_to_UTC_datetime(date) {
     )
 }
 
+// function for end of server pipeline
+function fileNotFound(req, res) {
+    let url = req.url;
+    res.type('text/plain');
+    res.status(404);
+    res.send('Cannot find '+url);
+    }
 
 // finally, file not found, if we cannot handle otherwise.
 app.use( fileNotFound );
